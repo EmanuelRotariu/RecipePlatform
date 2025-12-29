@@ -1,0 +1,94 @@
+import { useEffect, useState } from "react";
+import { db, auth } from "../lib/firebase";
+import { collection, doc, getDocs, deleteDoc } from "firebase/firestore";
+import withAuth from "@/components/withAuth";
+import Link from "next/link";
+
+function Favorites() {
+  const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchFavorites = async () => {
+    setLoading(true);
+    try {
+      const favCol = collection(db, "favorites", auth.currentUser.uid, "recipes");
+      const snapshot = await getDocs(favCol);
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setFavorites(data);
+    } catch (err) {
+      console.error("Eroare la citire favorites:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFavorites();
+  }, []);
+
+  const handleRemove = async (id) => {
+    try {
+      await deleteDoc(doc(db, "favorites", auth.currentUser.uid, "recipes", id));
+      setFavorites(favorites.filter(fav => fav.id !== id));
+    } catch (err) {
+      console.error("Eroare la ștergerea favorite:", err);
+    }
+  };
+
+  if (loading) return <p className="text-center mt-10">Se încarcă favoritele...</p>;
+  if (favorites.length === 0)
+    return <p className="text-center mt-10 text-gray-500">Nu ai nicio rețetă favorită.</p>;
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-black p-6">
+      <h1 className="text-3xl font-bold mb-6 text-black dark:text-white">Favorite</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {favorites.map(fav => {
+          const validRatings = fav.comments?.filter(c => typeof c.rating === "number") || [];
+          const averageRating = validRatings.length
+            ? (validRatings.reduce((acc, c) => acc + c.rating, 0) / validRatings.length).toFixed(1)
+            : 0;
+
+          return (
+            <div
+              key={fav.id}
+              className="bg-white dark:bg-zinc-900 p-4 rounded shadow hover:shadow-lg transition"
+            >
+              {fav.image ? (
+                <img
+                  src={fav.image}
+                  alt={fav.title}
+                  className="w-full h-40 object-cover rounded mb-2"
+                />
+              ) : (
+                <div className="w-full h-40 bg-gray-200 dark:bg-zinc-700 rounded mb-2 flex items-center justify-center text-gray-500">
+                  No image
+                </div>
+              )}
+              <h2 className="text-xl font-semibold text-black dark:text-white">{fav.title}</h2>
+              <p className="text-gray-700 dark:text-gray-300">{averageRating}/5 ({validRatings.length})</p>
+
+              <div className="flex gap-2 mt-2">
+                <Link
+                  href={`/recipes/${fav.id}`}
+                  className="bg-blue-600 text-white p-1 rounded hover:bg-blue-700 transition"
+                >
+                  Vezi
+                </Link>
+                <button
+                  onClick={() => handleRemove(fav.id)}
+                  className="bg-red-600 text-white p-1 rounded hover:bg-red-700 transition"
+                >
+                  Șterge
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default withAuth(Favorites);
