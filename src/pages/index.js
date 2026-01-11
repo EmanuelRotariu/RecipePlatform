@@ -1,7 +1,7 @@
 import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db, auth } from "../lib/firebase";
-import Link from "next/link";
+import RecipeCard from "../components/RecipeCard"; // importăm componenta
 
 export default function Home() {
   const [recipes, setRecipes] = useState([]);
@@ -10,7 +10,7 @@ export default function Home() {
   const [favoritesIds, setFavoritesIds] = useState([]);
   const [sortBy, setSortBy] = useState("recent"); // recent | popular
 
-  // Preluăm rețetele
+  // Fetch recipes
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
@@ -26,10 +26,9 @@ export default function Home() {
     fetchRecipes();
   }, []);
 
-  // Preluăm favoritele userului curent
+  // Fetch favorites
   useEffect(() => {
     if (!auth.currentUser) return;
-
     const fetchFavorites = async () => {
       try {
         const favCol = collection(db, "favorites", auth.currentUser.uid, "recipes");
@@ -45,7 +44,6 @@ export default function Home() {
 
   const toggleFavorite = async (recipe) => {
     if (!auth.currentUser) return alert("Trebuie să fii logat!");
-
     const favRef = doc(db, "favorites", auth.currentUser.uid, "recipes", recipe.id);
     try {
       if (favoritesIds.includes(recipe.id)) {
@@ -60,6 +58,7 @@ export default function Home() {
     }
   };
 
+  // Filtrare și calcul rating mediu
   const filteredRecipes = recipes
     .filter(recipe =>
       recipe.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,6 +85,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 dark:bg-black p-6">
       <h1 className="text-3xl font-bold mb-4 text-black dark:text-white">Rețete</h1>
 
+      {/* Search & Sort */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <input
           type="text"
@@ -110,32 +110,15 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Recipe Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedRecipes.map(recipe => (
-          <div key={recipe.id} className="bg-white dark:bg-zinc-900 p-4 rounded shadow hover:shadow-lg transition">
-            <Link href={`/recipes/${recipe.id}`}>
-              {recipe.image ? (
-                <img src={recipe.image} alt={recipe.title} className="w-full h-40 object-cover rounded mb-2" />
-              ) : (
-                <div className="w-full h-40 bg-gray-200 dark:bg-zinc-700 rounded mb-2 flex items-center justify-center text-gray-500">
-                  No image
-                </div>
-              )}
-              <h2 className="text-xl font-semibold text-black dark:text-white">{recipe.title}</h2>
-              <p className="text-gray-700 dark:text-gray-300">{recipe.averageRating}/5 ({recipe.ratingsCount})</p>
-            </Link>
-
-            <button
-              onClick={() => toggleFavorite(recipe)}
-              className={`mt-2 w-full p-2 rounded ${
-                favoritesIds.includes(recipe.id)
-                  ? "bg-red-600 text-white hover:bg-red-700"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              } transition`}
-            >
-              {favoritesIds.includes(recipe.id) ? "Șterge din favorite" : "Adaugă la favorite"}
-            </button>
-          </div>
+          <RecipeCard
+            key={recipe.id}
+            recipe={recipe}
+            isFavorite={favoritesIds.includes(recipe.id)}
+            toggleFavorite={toggleFavorite}
+          />
         ))}
 
         {sortedRecipes.length === 0 && (
