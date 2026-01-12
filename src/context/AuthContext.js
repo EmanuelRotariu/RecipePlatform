@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -14,9 +14,8 @@ export const AuthProvider = ({ children }) => {
       setUser(currentUser);
       setLoading(false);
 
-      // Într-un proiect real aici am încărca favorite din Firestore
       if (currentUser) {
-        setFavorites([]); // placeholder
+        setFavorites([]); // aici poți încărca din Firestore
       } else {
         setFavorites([]);
       }
@@ -26,15 +25,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const addFavorite = (recipeId) => {
-    setFavorites(prev => [...prev, recipeId]);
+    setFavorites((prev) => [...prev, recipeId]);
   };
 
   const removeFavorite = (recipeId) => {
-    setFavorites(prev => prev.filter(id => id !== recipeId));
+    setFavorites((prev) => prev.filter((id) => id !== recipeId));
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, favorites, addFavorite, removeFavorite }}>
+    <AuthContext.Provider
+      value={{ user, loading, favorites, addFavorite, removeFavorite }}
+    >
       {children}
     </AuthContext.Provider>
   );
