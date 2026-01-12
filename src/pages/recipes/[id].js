@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 
 export default function RecipeDetail() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function RecipeDetail() {
 
   const [currentImage, setCurrentImage] = useState(0);
 
+  // Fetch recipe
   useEffect(() => {
     if (!id) return;
 
@@ -51,12 +53,15 @@ export default function RecipeDetail() {
   };
 
   const prevImage = () => {
-    setCurrentImage((prev) =>
-      prev === 0 ? images.length - 1 : prev - 1
-    );
+    setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleAddReview = async () => {
+    if (!user) {
+      alert("Trebuie să fii logat pentru a adăuga review!");
+      return;
+    }
+
     if (userRating === 0) {
       alert("Trebuie să dai rating înainte de a adăuga review!");
       return;
@@ -77,9 +82,7 @@ export default function RecipeDetail() {
 
       setRecipe({
         ...recipe,
-        comments: recipe.comments
-          ? [...recipe.comments, newReview]
-          : [newReview],
+        comments: recipe.comments ? [...recipe.comments, newReview] : [newReview],
       });
 
       setUserRating(0);
@@ -89,14 +92,9 @@ export default function RecipeDetail() {
     }
   };
 
-  const validRatings =
-    recipe.comments?.filter((c) => typeof c.rating === "number") || [];
-
+  const validRatings = recipe.comments?.filter((c) => typeof c.rating === "number") || [];
   const averageRating = validRatings.length
-    ? (
-        validRatings.reduce((acc, c) => acc + c.rating, 0) /
-        validRatings.length
-      ).toFixed(1)
+    ? (validRatings.reduce((acc, c) => acc + c.rating, 0) / validRatings.length).toFixed(1)
     : 0;
 
   return (
@@ -109,6 +107,16 @@ export default function RecipeDetail() {
         <p className="mb-4 text-lg text-yellow-600">
           {averageRating}/5 ({validRatings.length} review-uri)
         </p>
+
+        {/* Editează doar dacă ești logat și creator */}
+        {user && recipe.userId === user.uid && (
+          <Link
+            href={`/edit-recipe/${id}`}
+            className="bg-yellow-500 text-white p-1 rounded mb-4 inline-block"
+          >
+            Editează
+          </Link>
+        )}
 
         {/* IMAGE SLIDER */}
         {images.length > 0 ? (
@@ -146,22 +154,16 @@ export default function RecipeDetail() {
           </div>
         )}
 
-        <p className="mb-4 text-gray-700 dark:text-gray-300">
-          {recipe.description}
-        </p>
+        <p className="mb-4 text-gray-700 dark:text-gray-300">{recipe.description}</p>
 
-        <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">
-          Ingrediente
-        </h2>
+        <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">Ingrediente</h2>
         <ul className="list-disc list-inside mb-4 text-gray-700 dark:text-gray-300">
           {recipe.ingredients.split(";").map((item, idx) => (
             <li key={idx}>{item}</li>
           ))}
         </ul>
 
-        <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">
-          Pași
-        </h2>
+        <h2 className="text-xl font-semibold mb-2 text-black dark:text-white">Pași</h2>
         <ol className="list-decimal list-inside text-gray-700 dark:text-gray-300 mb-6">
           {recipe.steps.split(";").map((step, idx) => (
             <li key={idx}>{step}</li>
@@ -180,9 +182,7 @@ export default function RecipeDetail() {
                 key={n}
                 onClick={() => setUserRating(n)}
                 className={`px-3 py-1 rounded border ${
-                  userRating === n
-                    ? "bg-yellow-500 text-black"
-                    : "bg-gray-200 dark:bg-zinc-700"
+                  userRating === n ? "bg-yellow-500 text-black" : "bg-gray-200 dark:bg-zinc-700"
                 }`}
               >
                 {n}
@@ -206,28 +206,19 @@ export default function RecipeDetail() {
         </div>
 
         {/* COMMENTS */}
-        <h3 className="text-xl font-semibold mb-2 text-black dark:text-white">
-          Comentarii
-        </h3>
+        <h3 className="text-xl font-semibold mb-2 text-black dark:text-white">Comentarii</h3>
 
         {recipe.comments?.length ? (
           recipe.comments.map((c, idx) => (
-            <div
-              key={idx}
-              className="mb-2 p-2 border rounded bg-gray-100 dark:bg-zinc-800"
-            >
+            <div key={idx} className="mb-2 p-2 border rounded bg-gray-100 dark:bg-zinc-800">
               <p className="font-semibold">
                 {c.userName} – {c.rating}/5
               </p>
-              {c.text && (
-                <p className="text-gray-700 dark:text-gray-300">{c.text}</p>
-              )}
+              {c.text && <p className="text-gray-700 dark:text-gray-300">{c.text}</p>}
             </div>
           ))
         ) : (
-          <p className="text-gray-500 dark:text-gray-400">
-            Niciun comentariu încă.
-          </p>
+          <p className="text-gray-500 dark:text-gray-400">Niciun comentariu încă.</p>
         )}
       </div>
     </div>

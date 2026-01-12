@@ -1,7 +1,7 @@
 import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db, auth } from "../lib/firebase";
-import RecipeCard from "../components/RecipeCard"; // importăm componenta
+import RecipeCard from "../components/RecipeCard"; // componenta card
 
 export default function Home() {
   const [recipes, setRecipes] = useState([]);
@@ -9,8 +9,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [favoritesIds, setFavoritesIds] = useState([]);
   const [sortBy, setSortBy] = useState("recent"); // recent | popular
+  const [tagFilters, setTagFilters] = useState([]); // filtre pentru tag-uri
 
-  // Fetch recipes
+  // Fetch rețete
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
@@ -58,11 +59,13 @@ export default function Home() {
     }
   };
 
-  // Filtrare și calcul rating mediu
+  // Filtrare rețete după search și tag-uri
   const filteredRecipes = recipes
     .filter(recipe =>
-      recipe.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.ingredients?.toLowerCase().includes(searchTerm.toLowerCase())
+      (recipe.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       recipe.ingredients?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (tagFilters.length === 0 || 
+       (recipe.tags && tagFilters.every(tag => recipe.tags.includes(tag))))
     )
     .map(recipe => {
       const validRatings = recipe.comments?.filter(c => typeof c.rating === "number") || [];
@@ -85,8 +88,8 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 dark:bg-black p-6">
       <h1 className="text-3xl font-bold mb-4 text-black dark:text-white">Rețete</h1>
 
-      {/* Search & Sort */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+      {/* Search și Sort */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
         <input
           type="text"
           placeholder="Caută după titlu sau ingrediente..."
@@ -110,7 +113,29 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Recipe Cards */}
+      {/* Filtre tag-uri */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {["vegetarian", "gluten-free", "quick", "italian"].map(tag => (
+          <label key={tag} className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              value={tag}
+              checked={tagFilters.includes(tag)}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setTagFilters([...tagFilters, tag]);
+                } else {
+                  setTagFilters(tagFilters.filter(t => t !== tag));
+                }
+              }}
+              className="accent-blue-600"
+            />
+            {tag}
+          </label>
+        ))}
+      </div>
+
+      {/* Card-uri */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedRecipes.map(recipe => (
           <RecipeCard

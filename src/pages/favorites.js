@@ -4,6 +4,14 @@ import { collection, doc, getDocs, deleteDoc } from "firebase/firestore";
 import withAuth from "@/components/withAuth";
 import Link from "next/link";
 
+// ✅ funcție pentru a lua prima imagine
+const getFirstImage = (recipe) => {
+  if (Array.isArray(recipe.images) && recipe.images.length > 0)
+    return recipe.images[0];
+  if (typeof recipe.image === "string") return recipe.image;
+  return null;
+};
+
 function Favorites() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,14 +58,16 @@ function Favorites() {
             ? (validRatings.reduce((acc, c) => acc + c.rating, 0) / validRatings.length).toFixed(1)
             : 0;
 
+          const firstImage = getFirstImage(fav);
+
           return (
             <div
               key={fav.id}
               className="bg-white dark:bg-zinc-900 p-4 rounded shadow hover:shadow-lg transition"
             >
-              {fav.image ? (
+              {firstImage ? (
                 <img
-                  src={fav.image}
+                  src={firstImage}
                   alt={fav.title}
                   className="w-full h-40 object-cover rounded mb-2"
                 />
@@ -66,6 +76,7 @@ function Favorites() {
                   No image
                 </div>
               )}
+
               <h2 className="text-xl font-semibold text-black dark:text-white">{fav.title}</h2>
               <p className="text-gray-700 dark:text-gray-300">{averageRating}/5 ({validRatings.length})</p>
 

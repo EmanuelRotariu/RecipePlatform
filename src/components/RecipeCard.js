@@ -1,8 +1,8 @@
 import { useState } from "react";
 import Link from "next/link";
+import { auth } from "../lib/firebase";
 
 export default function RecipeCard({ recipe, isFavorite, toggleFavorite }) {
-  // Array de imagini
   const images = Array.isArray(recipe.images)
     ? recipe.images
     : recipe.image
@@ -56,10 +56,15 @@ export default function RecipeCard({ recipe, isFavorite, toggleFavorite }) {
           )}
         </div>
 
-        <h2 className="text-xl font-semibold text-black dark:text-white">{recipe.title}</h2>
-        <p className="text-gray-700 dark:text-gray-300">{recipe.averageRating}/5 ({recipe.ratingsCount})</p>
+        <h2 className="text-xl font-semibold text-black dark:text-white">
+          {recipe.title}
+        </h2>
+        <p className="text-gray-700 dark:text-gray-300">
+          {recipe.averageRating}/5 ({recipe.ratingsCount})
+        </p>
       </Link>
 
+      {/* FAVORITE */}
       <button
         onClick={() => toggleFavorite(recipe)}
         className={`mt-2 w-full p-2 rounded ${
@@ -70,6 +75,15 @@ export default function RecipeCard({ recipe, isFavorite, toggleFavorite }) {
       >
         {isFavorite ? "Șterge din favorite" : "Adaugă la favorite"}
       </button>
+
+      {/* EDIT – doar pentru creator și dacă e logat */}
+      {auth.currentUser && auth.currentUser.uid === recipe.userId && (
+        <Link href={`/edit-recipe/${recipe.id}`}>
+          <button className="mt-2 w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 transition">
+            Editează rețeta
+          </button>
+        </Link>
+      )}
     </div>
   );
 }
