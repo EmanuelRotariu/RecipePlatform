@@ -1,8 +1,8 @@
+import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
-// Mock Firebase Auth global
 vi.mock("@/lib/firebase", () => ({
-  auth: {},
+  auth: { currentUser: null },
 }));
 
 vi.mock("firebase/auth", () => ({

@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react"; /* Hook pentru a gestiona indexul imaginii curente în slider */
 import Link from "next/link"; /* Componentă pentru link-uri interne */
 import { auth } from "../lib/firebase"; /* Importăm instanța auth pentru a verifica cine este la tastatură */
