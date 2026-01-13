@@ -100,7 +100,7 @@ export default function Home() {
           placeholder="Caută după titlu sau ingrediente..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full max-w-md border p-2 rounded text-black"
+          className="w-full max-w-md border p-2 rounded bg-white text-black dark:bg-zinc-800 dark:text-white dark:placeholder-gray-400 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <div className="flex gap-2">
           <button
