@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { useRouter } from "next/router";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../lib/firebase"; // client-side only
+import { useState } from "react"; /* Hook pentru stare */
+import { useRouter } from "next/router"; /* Hook pentru navigare */
+import { signInWithEmailAndPassword } from "firebase/auth"; /* Funcția Firebase pentru logare */
+import { auth } from "../lib/firebase"; /* Instanța Firebase */
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState(""); /* Stare email */
+  const [password, setPassword] = useState(""); /* Stare parolă */
+  const [error, setError] = useState(""); /* Stare eroare */
   const router = useRouter();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+    e.preventDefault(); /* Stop refresh pagină */
+    setError(""); /* Reset eroare */
 
     if (!email || !password) {
       setError("Email și parola sunt obligatorii.");
@@ -19,10 +19,11 @@ export default function Login() {
     }
 
     try {
+      /* Încercăm autentificarea utilizatorului */
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/dashboard"); // redirect după succes
+      router.push("/dashboard"); /* Redirecționare la dashboard în caz de succes */
     } catch (err) {
-      setError(err.message);
+      setError(err.message); /* Afișăm eroarea (ex: utilizator negăsit) */
     }
   };
 

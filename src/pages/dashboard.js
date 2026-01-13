@@ -1,41 +1,44 @@
-import { useState } from "react";
-import { db } from "../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import withAuth from "@/components/withAuth";
-import { auth } from "../lib/firebase";
+import { useState } from "react"; /* Importăm hook-ul pentru starea locală a formularului */
+import { db } from "../lib/firebase"; /* Importăm baza de date Firestore */
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"; /* Importăm funcțiile de scriere în DB */
+import withAuth from "@/components/withAuth"; /* Protejăm pagina pentru utilizatori logați */
+import { auth } from "../lib/firebase"; /* Importăm instanța de autentificare */
 
 function Dashboard() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [ingredients, setIngredients] = useState("");
-  const [steps, setSteps] = useState("");
-  const [images, setImages] = useState([""]);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [title, setTitle] = useState(""); /* Titlul rețetei */
+  const [description, setDescription] = useState(""); /* O scurtă descriere */
+  const [ingredients, setIngredients] = useState(""); /* Lista de ingrediente */
+  const [steps, setSteps] = useState(""); /* Instrucțiunile de preparare */
+  const [images, setImages] = useState([""]); /* Un array care începe cu un câmp gol pentru URL-ul imaginii */
+  const [message, setMessage] = useState(""); /* Mesaj de feedback (succes sau eroare) */
+  const [loading, setLoading] = useState(false); /* Stare pentru a dezactiva butonul în timpul salvării */
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
+    e.preventDefault(); /* Prevenim reîncărcarea paginii */
+ /* Validare: verificăm dacă câmpurile esențiale sunt completate */
     if (!title || !ingredients || !steps) {
       setMessage("Title, Ingredients și Steps sunt obligatorii!");
       return;
     }
 
-    setLoading(true);
+    setLoading(true); /* Activăm starea de încărcare */
     setMessage("Se salvează rețeta...");
 
     try {
+      /* Adăugăm un document nou în colecția "recipes" */
       await addDoc(collection(db, "recipes"), {
         title,
         description,
         ingredients,
         steps,
+        /* Filtrăm URL-urile goale pentru a nu salva string-uri inutile în baza de date */
         images: images.filter((img) => img.trim() !== ""),
-        createdAt: serverTimestamp(),
-        userId: auth.currentUser.uid,
+        createdAt: serverTimestamp(), /* Timestamp generat de serverul Firebase */
+        userId: auth.currentUser.uid, /* Asociem rețeta cu ID-ul utilizatorului logat */
       });
 
       setMessage("✅ Rețeta a fost adăugată cu succes!");
+      /* Resetăm toate câmpurile formularului după succes */
       setTitle("");
       setDescription("");
       setIngredients("");
@@ -51,6 +54,7 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black p-6 flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-6 text-black dark:text-white">
+        {/* Afișăm mesajul de stare dacă acesta există */}
         Dashboard – Adaugă o rețetă
       </h1>
 

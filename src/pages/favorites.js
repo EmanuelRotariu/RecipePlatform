@@ -1,21 +1,21 @@
-import { useEffect, useState } from "react";
-import { db, auth } from "../lib/firebase";
-import { collection, doc, getDocs, deleteDoc } from "firebase/firestore";
+import { useEffect, useState } from "react"; /* Hook-uri React */
+import { db, auth } from "../lib/firebase"; /* Firebase config */
+import { collection, doc, getDocs, deleteDoc } from "firebase/firestore"; /* Funcții Firestore */
 import withAuth from "@/components/withAuth";
-import Link from "next/link";
+import Link from "next/link"; /* Navigare */
 
-// ✅ funcție pentru a lua prima imagine
+//  funcție pentru a lua prima imagine
 const getFirstImage = (recipe) => {
-  if (Array.isArray(recipe.images) && recipe.images.length > 0)
+  if (Array.isArray(recipe.images) && recipe.images.length > 0) /* Dacă e array, ia prima */
     return recipe.images[0];
-  if (typeof recipe.image === "string") return recipe.image;
-  return null;
-};
+  if (typeof recipe.image === "string") return recipe.image; /* Dacă e string vechi, ia imaginea */
+  return null; /* Altfel, returnează null */
+}; 
 
 function Favorites() {
-  const [favorites, setFavorites] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+  const [favorites, setFavorites] = useState([]); /* Lista de rețete favorite */
+  const [loading, setLoading] = useState(true); /* Stare încărcare */
+/* Funcție pentru preluarea datelor din sub-colecția de favorite a utilizatorului */
   const fetchFavorites = async () => {
     setLoading(true);
     try {
@@ -31,12 +31,14 @@ function Favorites() {
   };
 
   useEffect(() => {
-    fetchFavorites();
+    fetchFavorites(); /* Se execută la încărcarea paginii */
   }, []);
-
+/* Funcție pentru a elimina o rețetă de la favorite */
   const handleRemove = async (id) => {
     try {
+      /* Ștergem documentul din Firestore */
       await deleteDoc(doc(db, "favorites", auth.currentUser.uid, "recipes", id));
+      /* Actualizăm starea locală instant pentru a elimina cardul din UI */
       setFavorites(favorites.filter(fav => fav.id !== id));
     } catch (err) {
       console.error("Eroare la ștergerea favorite:", err);

@@ -7,55 +7,58 @@ import Link from "next/link";
 
 export default function RecipeDetail() {
   const router = useRouter();
-  const { id } = router.query;
-  const { user } = useAuth();
+  const { id } = router.query; /* Extragem ID-ul rețetei din URL-ul paginii */
+  const { user } = useAuth(); /* Extragem ID-ul rețetei din URL-ul paginii */
 
-  const [recipe, setRecipe] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [recipe, setRecipe] = useState(null); /* Starea pentru datele rețetei */
+  const [loading, setLoading] = useState(true); /* Indicator de încărcare */
 
-  const [userRating, setUserRating] = useState(0);
-  const [commentText, setCommentText] = useState("");
+  const [userRating, setUserRating] = useState(0); /* Starea pentru nota acordată de utilizator în formular */
+  const [commentText, setCommentText] = useState(""); /* Starea pentru textul comentariului */
 
-  const [currentImage, setCurrentImage] = useState(0);
+  const [currentImage, setCurrentImage] = useState(0); /* Indexul imaginii afișate curent în slider */
 
   // Fetch recipe
   useEffect(() => {
-    if (!id) return;
+    if (!id) return; /* Dacă ID-ul nu este încă disponibil în router, nu facem nimic */
 
     const fetchRecipe = async () => {
       try {
-        const docRef = doc(db, "recipes", id);
-        const docSnap = await getDoc(docRef);
+        const docRef = doc(db, "recipes", id); /* Referință către documentul specific din Firestore */
+        const docSnap = await getDoc(docRef); /* Preluăm datele documentului */
 
         if (docSnap.exists()) {
-          setRecipe(docSnap.data());
+          setRecipe(docSnap.data()); /* Salvăm datele rețetei în stare */
         } else {
-          setRecipe(null);
+          setRecipe(null); /* Cazul în care rețeta nu există în DB */
         }
       } catch (error) {
         console.error("Eroare la citire rețetă:", error);
       } finally {
-        setLoading(false);
+        setLoading(false); /* Oprim starea de încărcare */
       }
     };
 
     fetchRecipe();
-  }, [id]);
+  }, [id]); /* Re-executăm dacă se schimbă ID-ul în URL */
 
   if (loading) return <p className="text-center mt-10">Se încarcă rețeta...</p>;
   if (!recipe)
     return <p className="text-center mt-10 text-red-500">Rețeta nu a fost găsită.</p>;
 
-  const images = recipe.images || [];
+  const images = recipe.images || []; /* Asigurăm că avem un array de imagini, chiar dacă e gol */
 
+  /* Funcție pentru imaginea următoare în slider */
   const nextImage = () => {
     setCurrentImage((prev) => (prev + 1) % images.length);
   };
 
+  /* Funcție pentru imaginea anterioară în slider */
   const prevImage = () => {
     setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
+  /* Funcție pentru salvarea unui review nou */
   const handleAddReview = async () => {
     if (!user) {
       alert("Trebuie să fii logat pentru a adăuga review!");
@@ -69,29 +72,30 @@ export default function RecipeDetail() {
 
     const newReview = {
       userId: user.uid,
-      userName: user.displayName || user.email || "Anonim",
+      userName: user.displayName || user.email || "Anonim", /* Folosim numele sau email-ul utilizatorului */
       rating: userRating,
       text: commentText.trim() || "",
     };
 
     try {
       const docRef = doc(db, "recipes", id);
+      /* Folosim arrayUnion pentru a adăuga review-ul în array-ul 'comments' fără a șterge ce era înainte */
       await updateDoc(docRef, {
         comments: arrayUnion(newReview),
       });
-
+/* Actualizăm starea locală a rețetei pentru a afișa noul review instant în UI */
       setRecipe({
         ...recipe,
         comments: recipe.comments ? [...recipe.comments, newReview] : [newReview],
       });
-
+/* Resetăm formularul de review */
       setUserRating(0);
       setCommentText("");
     } catch (err) {
       console.error("Eroare la adăugarea review-ului:", err);
     }
   };
-
+/* Calculăm media notelor doar din review-urile valide */
   const validRatings = recipe.comments?.filter((c) => typeof c.rating === "number") || [];
   const averageRating = validRatings.length
     ? (validRatings.reduce((acc, c) => acc + c.rating, 0) / validRatings.length).toFixed(1)
